@@ -2,8 +2,9 @@
 Builds a heterogeneous network graph from the SQLite data and exports it
 as both CSV (nodes + edges) and JSON (node-link format).
 
-Node types : company | investor_org | investor_person | founder | university
+Node types : company | investor_org | investor_person | founder | person | university
 Edge types : invested_in | founded | educated_at | co_invested_in
+             | board_member_of | executive_of | advisor_to | team_member_of
 """
 
 import csv
@@ -77,12 +78,44 @@ def build_graph(store) -> dict:
         )
 
     # -- Founder nodes + founded edges -------------------------------- #
-    for f in store.get_all_founders():
-        full_name = " ".join(filter(None, [f.get("first_name"), f.get("last_name")]))
-        add_node(f["uuid"], "founder", full_name or f.get("permalink"))
+    # Only add people who actually founded a company as "founder" nodes.
+    # Team-only people (board members, executives, etc.) will be added
+    # later as "person" nodes in the team edges section.
+    founder_edges = store.get_company_founder_edges()
+    actual_founder_uuids = {cf["founder_uuid"] for cf in founder_edges}
 
-    for cf in store.get_company_founder_edges():
+    for f in store.get_all_founders():
+        if f["uuid"] in actual_founder_uuids:
+            full_name = " ".join(filter(None, [f.get("first_name"), f.get("last_name")]))
+            add_node(f["uuid"], "founder", full_name or f.get("permalink"))
+
+    for cf in founder_edges:
         add_edge(cf["founder_uuid"], cf["company_uuid"], "founded")
+
+    # -- Team member edges (board, c-suite, advisors) ----------------- #
+    ROLE_EDGE_MAP = {
+        "board_member": "board_member_of",
+        "c_suite":      "executive_of",
+        "vp":           "executive_of",
+        "director":     "executive_of",
+        "advisor":      "advisor_to",
+        "founder":      "founded",        # deduped by seen_edges
+        "other":        "team_member_of",
+    }
+    for ct in store.get_company_team_edges():
+        person_uuid  = ct["person_uuid"]
+        company_uuid = ct["company_uuid"]
+        role         = ct.get("role", "other")
+
+        # Add person node if not already present (e.g. not in company_founders)
+        if person_uuid not in nodes:
+            add_node(person_uuid, "person", ct.get("title") or person_uuid)
+
+        edge_type = ROLE_EDGE_MAP.get(role, "team_member_of")
+        add_edge(
+            person_uuid, company_uuid, edge_type,
+            {"role": role, "title": ct.get("title")},
+        )
 
     # -- University nodes + educated_at edges ------------------------- #
     for edu in store.get_all_education():

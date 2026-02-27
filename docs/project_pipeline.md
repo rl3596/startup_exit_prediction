@@ -76,7 +76,9 @@ companies ----< funding_rounds
 | Funding Rounds | 27,623 |
 | Investors | 18,661 |
 | Founders | 21,017 |
-| Portfolio Edges (2-hop) | 459,660+ |
+| Education Records | 17,694 |
+| Job Records | 47,130 |
+| Portfolio Edges (2-hop) | 481,522 |
 | Company-Investor Links | 125,931 |
 | Round-Investor Links | 69,739 |
 
@@ -124,7 +126,8 @@ Success is defined relative to company age as of Dec 31, 2025:
 | `investor_org` | VC firms, corporate VCs, accelerators | ~14,000 |
 | `investor_person` | Angel investors, individual investors | ~4,600 |
 | `founder` | Company founders | 21,017 |
-| `university` | Educational institutions (from founder degrees) | TBD |
+| `university` | Educational institutions (from founder degrees) | 2,723 |
+| **Total** | | **204,055** |
 
 ### Edge Types
 
@@ -134,6 +137,7 @@ Success is defined relative to company age as of Dec 31, 2025:
 | `founded` | Founder -> Company | Org founders card |
 | `educated_at` | Founder -> University | Degrees card |
 | `co_invested_in` | Investor <-> Investor | Same-round participation |
+| **Total** | | **609,243 edges** |
 
 ---
 
