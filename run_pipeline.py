@@ -9,6 +9,7 @@ Phases:
     1  Discover      — find all US AI companies (2015-2025)
     2  Detail        — per-company entity + cards + exit labels
     3  Investors     — 1-hop investor profiles, 2-hop VC portfolios
+    7  Team          — board members + management team discovery
     4  Founders      — person profiles + education (Enterprise only)
     5  Export        — flat CSVs + graph JSON/CSV
     6  Validate      — statistics report
@@ -21,8 +22,8 @@ Selective phases:
     python run_pipeline.py --phases 0 1 2
 
 Sample mode (for pipeline testing):
-    python run_pipeline.py --phases 2 3 4 5 6 --sample 500
-    Limits Phases 2/3/4 to the first N companies so you can verify the
+    python run_pipeline.py --phases 2 3 7 4 5 6 --sample 500
+    Limits Phases 2/3/7/4 to the first N companies so you can verify the
     full pipeline end-to-end before running on the complete dataset.
 """
 
@@ -50,6 +51,7 @@ from phases import (
     phase1_discover,
     phase2_company_detail,
     phase3_investor_network,
+    phase4b_team,
     phase4_founders,
     phase6_validate,
 )
@@ -61,8 +63,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Crunchbase AI Startup Pipeline")
     parser.add_argument(
         "--phases", nargs="+", type=int,
-        default=[0, 1, 2, 3, 4, 5, 6],
-        help="Which phases to run (default: all). E.g. --phases 0 1 2"
+        default=[0, 1, 2, 3, 7, 4, 5, 6],
+        help="Which phases to run (default: all). Phase 7 = team member discovery. "
+             "E.g. --phases 0 1 2"
     )
     parser.add_argument(
         "--sample", type=int, default=None,
@@ -113,7 +116,7 @@ def main():
     if sample is not None:
         companies_for_detail = companies[:sample]
         logger.info(
-            "Sample mode: limiting Phases 2/3/4 to first %d of %d companies.",
+            "Sample mode: limiting Phases 2/3/7/4 to first %d of %d companies.",
             len(companies_for_detail), len(companies)
         )
 
@@ -132,6 +135,13 @@ def main():
         phase3_investor_network.run(api, store)
 
     # ------------------------------------------------------------------ #
+    #  Phase 7: Board Members & Management Team                          #
+    # ------------------------------------------------------------------ #
+    if 7 in phases:
+        logger.info("=== PHASE 7: TEAM MEMBER DISCOVERY ===")
+        phase4b_team.run(api, store, companies_for_detail)
+
+    # ------------------------------------------------------------------ #
     #  Phase 4: Founder Profiles + Education                             #
     # ------------------------------------------------------------------ #
     if 4 in phases:
@@ -143,11 +153,21 @@ def main():
     # ------------------------------------------------------------------ #
     if 5 in phases:
         logger.info("=== PHASE 5: EXPORTING DATA ===")
-        for table in ["companies", "funding_rounds", "investors",
-                       "founders", "education", "jobs", "ipos", "acquisitions",
-                       "portfolio_edges"]:
+        # Export tables.  Tuples override the default filename:
+        #   (db_table_name, csv_filename)
+        export_list = [
+            "companies", "funding_rounds", "investors",
+            ("founders", "people"),        # universal person registry
+            "education", "jobs", "ipos", "acquisitions",
+            "portfolio_edges", "company_team",
+        ]
+        for entry in export_list:
+            if isinstance(entry, tuple):
+                table, fname = entry
+            else:
+                table = fname = entry
             store.export_table_to_csv(
-                table, str(config.EXPORT_DIR / f"{table}.csv")
+                table, str(config.EXPORT_DIR / f"{fname}.csv")
             )
         graph = build_graph(store)
         export_graph(graph, config.EXPORT_DIR)

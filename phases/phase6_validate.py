@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def run(store, graph: dict, access_report: dict):
-    stats = store.get_stats()
+    stats      = store.get_stats()
+    team_stats = store.get_team_stats()
 
     lines = [
         "",
@@ -30,6 +31,7 @@ def run(store, graph: dict, access_report: dict):
         f"  with investors               : {stats['companies_with_investors']}",
         f"  with founders                : {stats['companies_with_founders']}",
         f"  with education data          : {stats['companies_with_education']}",
+        f"  with team data               : {stats['companies_with_team']}",
         "",
         "  --- Success Label (ML target: is_success) ---",
         f"  Success     (is_success=1)   : {stats['num_success']}",
@@ -44,10 +46,22 @@ def run(store, graph: dict, access_report: dict):
         "",
         "  --- Network Entities ---",
         f"  Investors                    : {stats['num_investors']}",
-        f"  Founders                     : {stats['num_founders']}",
+        f"  Founders (all people)        : {stats['num_founders']}",
         f"  Universities                 : {stats['num_universities']}",
         f"  Funding rounds               : {stats['num_rounds']}",
         f"  Job records                  : {stats['num_jobs']}",
+        "",
+        "  --- Team Members (Phase 7) ---",
+        f"  Total team links             : {team_stats['num_team_rows']}",
+        f"  Unique team people           : {team_stats['num_unique_team_people']}",
+        f"  Companies with team data     : {team_stats['num_companies_with_team']}",
+        f"  Board members                : {team_stats['num_team_board']}",
+        f"  C-suite                      : {team_stats['num_team_csuite']}",
+        f"  VPs / Heads                  : {team_stats['num_team_vp']}",
+        f"  Directors                    : {team_stats['num_team_director']}",
+        f"  Advisors                     : {team_stats['num_team_advisor']}",
+        f"  Founders (via team search)   : {team_stats['num_team_founder']}",
+        f"  Other roles                  : {team_stats['num_team_other']}",
         "",
         "  --- Graph Summary ---",
         f"  Total nodes                  : {len(graph['nodes'])}",

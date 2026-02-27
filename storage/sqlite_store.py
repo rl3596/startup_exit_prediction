@@ -140,6 +140,14 @@ CREATE TABLE IF NOT EXISTS portfolio_edges (
     money_raised_usd       REAL,
     PRIMARY KEY (vc_uuid, portfolio_company_uuid, announced_on)
 );
+
+CREATE TABLE IF NOT EXISTS company_team (
+    company_uuid TEXT REFERENCES companies(uuid),
+    person_uuid  TEXT REFERENCES founders(uuid),
+    role         TEXT,       -- 'board_member', 'advisor', 'c_suite', 'vp', 'director', 'founder', 'other'
+    title        TEXT,       -- raw primary_job_title from API
+    PRIMARY KEY (company_uuid, person_uuid)
+);
 """
 
 
@@ -823,6 +831,76 @@ class SQLiteStore:
                     money_usd,
                 ))
 
+    # ------------------------------------------------------------------ #
+    #  Team Members (board, management, advisors)                          #
+    # ------------------------------------------------------------------ #
+
+    def upsert_team_member(self, company_uuid: str, person: dict,
+                           role: str, title: str):
+        """
+        Insert a person into the founders table (if not already present) and
+        create a company_team junction row.
+
+        person dict: uuid, permalink, first_name, last_name,
+                     primary_job_title, linkedin, gender
+        """
+        sql_person = """
+            INSERT OR IGNORE INTO founders
+                (uuid, permalink, first_name, last_name, primary_job_title,
+                 linkedin, gender)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        sql_team = """
+            INSERT OR IGNORE INTO company_team
+                (company_uuid, person_uuid, role, title)
+            VALUES (?, ?, ?, ?)
+        """
+        with self._connect() as conn:
+            linkedin = person.get("linkedin")
+            if isinstance(linkedin, dict):
+                linkedin = linkedin.get("value")
+            conn.execute(sql_person, (
+                person["uuid"],
+                person.get("permalink"),
+                person.get("first_name"),
+                person.get("last_name"),
+                person.get("primary_job_title"),
+                linkedin,
+                person.get("gender"),
+            ))
+            conn.execute(sql_team, (
+                company_uuid,
+                person["uuid"],
+                role,
+                title,
+            ))
+
+    def get_company_team_edges(self) -> list:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT company_uuid, person_uuid, role, title FROM company_team"
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_team_stats(self) -> dict:
+        queries = {
+            "num_team_rows":           "SELECT COUNT(*) FROM company_team",
+            "num_team_board":          "SELECT COUNT(*) FROM company_team WHERE role='board_member'",
+            "num_team_csuite":         "SELECT COUNT(*) FROM company_team WHERE role='c_suite'",
+            "num_team_vp":             "SELECT COUNT(*) FROM company_team WHERE role='vp'",
+            "num_team_director":       "SELECT COUNT(*) FROM company_team WHERE role='director'",
+            "num_team_advisor":        "SELECT COUNT(*) FROM company_team WHERE role='advisor'",
+            "num_team_founder":        "SELECT COUNT(*) FROM company_team WHERE role='founder'",
+            "num_team_other":          "SELECT COUNT(*) FROM company_team WHERE role='other'",
+            "num_companies_with_team": "SELECT COUNT(DISTINCT company_uuid) FROM company_team",
+            "num_unique_team_people":  "SELECT COUNT(DISTINCT person_uuid) FROM company_team",
+        }
+        stats = {}
+        with self._connect() as conn:
+            for key, sql in queries.items():
+                stats[key] = conn.execute(sql).fetchone()[0]
+        return stats
+
     def get_portfolio_edges(self) -> list:
         with self._connect() as conn:
             rows = conn.execute(
@@ -896,6 +974,7 @@ class SQLiteStore:
             "num_universities":        "SELECT COUNT(DISTINCT institution_uuid) FROM education WHERE institution_uuid IS NOT NULL",
             "num_rounds":              "SELECT COUNT(*) FROM funding_rounds",
             "num_jobs":                "SELECT COUNT(*) FROM jobs",
+            "companies_with_team":     "SELECT COUNT(DISTINCT company_uuid) FROM company_team",
         }
         stats = {}
         with self._connect() as conn:
@@ -911,11 +990,44 @@ class SQLiteStore:
     #  CSV export helpers                                                  #
     # ------------------------------------------------------------------ #
 
+    # Column renames applied at CSV export time so the DB schema stays
+    # backward-compatible while the exported files have clear names.
+    CSV_COLUMN_RENAMES = {
+        "founders": {
+            "uuid": "person_uuid",
+        },
+        "funding_rounds": {
+            "uuid": "round_uuid",
+        },
+        "education": {
+            "founder_uuid": "person_uuid",
+        },
+        "jobs": {
+            "founder_uuid": "person_uuid",
+        },
+        "company_founders": {
+            "founder_uuid": "person_uuid",
+        },
+        "investors": {
+            "uuid": "investor_uuid",
+        },
+        "ipos": {
+            "uuid": "ipo_uuid",
+        },
+        "acquisitions": {
+            "uuid": "acquisition_uuid",
+        },
+        "companies": {
+            "uuid": "company_uuid",
+        },
+    }
+
     def export_table_to_csv(self, table: str, csv_path: str):
         import csv
+        renames = self.CSV_COLUMN_RENAMES.get(table, {})
         with self._connect() as conn:
             cur  = conn.execute(f"SELECT * FROM {table}")
-            cols = [d[0] for d in cur.description]
+            cols = [renames.get(c, c) for c in (d[0] for d in cur.description)]
             rows = cur.fetchall()
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
