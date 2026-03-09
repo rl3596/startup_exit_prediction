@@ -1,6 +1,7 @@
 # Data files (large, contains API data)
-data/
-preqin/data/
+/data/
+preqin/data/*
+!preqin/data/DATA_DICTIONARY.md
 
 # Database
 *.db
