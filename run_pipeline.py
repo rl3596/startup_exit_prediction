@@ -10,6 +10,7 @@ Phases:
     2  Detail        — per-company entity + cards + exit labels
     3  Investors     — 1-hop investor profiles, 2-hop VC portfolios
     7  Team          — board members + management team discovery
+    8  Inv. Team     — investor org team/founder discovery
     4  Founders      — person profiles + education (Enterprise only)
     5  Export        — flat CSVs + graph JSON/CSV
     6  Validate      — statistics report
@@ -52,6 +53,7 @@ from phases import (
     phase2_company_detail,
     phase3_investor_network,
     phase4b_team,
+    phase8_investor_team,
     phase4_founders,
     phase6_validate,
 )
@@ -63,9 +65,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Crunchbase AI Startup Pipeline")
     parser.add_argument(
         "--phases", nargs="+", type=int,
-        default=[0, 1, 2, 3, 7, 4, 5, 6],
-        help="Which phases to run (default: all). Phase 7 = team member discovery. "
-             "E.g. --phases 0 1 2"
+        default=[0, 1, 2, 3, 7, 8, 4, 5, 6],
+        help="Which phases to run (default: all). Phase 7 = team discovery, "
+             "Phase 8 = investor team discovery. E.g. --phases 0 1 2"
     )
     parser.add_argument(
         "--sample", type=int, default=None,
@@ -142,6 +144,13 @@ def main():
         phase4b_team.run(api, store, companies_for_detail)
 
     # ------------------------------------------------------------------ #
+    #  Phase 8: Investor Organization Team                               #
+    # ------------------------------------------------------------------ #
+    if 8 in phases:
+        logger.info("=== PHASE 8: INVESTOR TEAM DISCOVERY ===")
+        phase8_investor_team.run(api, store, sample=sample)
+
+    # ------------------------------------------------------------------ #
     #  Phase 4: Founder Profiles + Education                             #
     # ------------------------------------------------------------------ #
     if 4 in phases:
@@ -159,7 +168,7 @@ def main():
             "companies", "funding_rounds", "investors",
             ("founders", "people"),        # universal person registry
             "education", "jobs", "ipos", "acquisitions",
-            "portfolio_edges", "company_team",
+            "portfolio_edges", "company_team", "investor_team",
         ]
         for entry in export_list:
             if isinstance(entry, tuple):

@@ -14,8 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 def run(store, graph: dict, access_report: dict):
-    stats      = store.get_stats()
-    team_stats = store.get_team_stats()
+    stats          = store.get_stats()
+    team_stats     = store.get_team_stats()
+    inv_team_stats = store.get_investor_team_stats()
 
     lines = [
         "",
@@ -62,6 +63,19 @@ def run(store, graph: dict, access_report: dict):
         f"  Advisors                     : {team_stats['num_team_advisor']}",
         f"  Founders (via team search)   : {team_stats['num_team_founder']}",
         f"  Other roles                  : {team_stats['num_team_other']}",
+        "",
+        "  --- Investor Team Members (Phase 8) ---",
+        f"  Total investor team links    : {inv_team_stats['num_inv_team_rows']}",
+        f"  Unique investor team people  : {inv_team_stats['num_unique_inv_team_people']}",
+        f"  Investors with team data     : {inv_team_stats['num_investors_with_team']}",
+        f"  Board members                : {inv_team_stats['num_inv_team_board']}",
+        f"  C-suite                      : {inv_team_stats['num_inv_team_csuite']}",
+        f"  VPs / Heads                  : {inv_team_stats['num_inv_team_vp']}",
+        f"  Directors                    : {inv_team_stats['num_inv_team_director']}",
+        f"  Advisors                     : {inv_team_stats['num_inv_team_advisor']}",
+        f"  Founders                     : {inv_team_stats['num_inv_team_founder']}",
+        f"  Person investors (angels)    : {inv_team_stats['num_inv_team_investor']}",
+        f"  Other roles                  : {inv_team_stats['num_inv_team_other']}",
         "",
         "  --- Graph Summary ---",
         f"  Total nodes                  : {len(graph['nodes'])}",

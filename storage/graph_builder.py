@@ -117,6 +117,21 @@ def build_graph(store) -> dict:
             {"role": role, "title": ct.get("title")},
         )
 
+    # -- Investor team edges (people at investor orgs) ---------------- #
+    for it in store.get_investor_team_edges():
+        person_uuid   = it["person_uuid"]
+        investor_uuid = it["investor_uuid"]
+        role          = it.get("role", "other")
+
+        if person_uuid not in nodes:
+            add_node(person_uuid, "person", it.get("title") or person_uuid)
+
+        edge_type = ROLE_EDGE_MAP.get(role, "team_member_of")
+        add_edge(
+            person_uuid, investor_uuid, edge_type,
+            {"role": role, "title": it.get("title")},
+        )
+
     # -- University nodes + educated_at edges ------------------------- #
     for edu in store.get_all_education():
         if edu.get("institution_uuid"):

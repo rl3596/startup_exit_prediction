@@ -148,6 +148,14 @@ CREATE TABLE IF NOT EXISTS company_team (
     title        TEXT,       -- raw primary_job_title from API
     PRIMARY KEY (company_uuid, person_uuid)
 );
+
+CREATE TABLE IF NOT EXISTS investor_team (
+    investor_uuid TEXT REFERENCES investors(uuid),
+    person_uuid   TEXT REFERENCES founders(uuid),
+    role          TEXT,
+    title         TEXT,
+    PRIMARY KEY (investor_uuid, person_uuid)
+);
 """
 
 
@@ -901,6 +909,94 @@ class SQLiteStore:
                 stats[key] = conn.execute(sql).fetchone()[0]
         return stats
 
+    # ------------------------------------------------------------------ #
+    #  Investor Team Members                                                #
+    # ------------------------------------------------------------------ #
+
+    def upsert_investor_team_member(self, investor_uuid: str, person: dict,
+                                    role: str, title: str):
+        """
+        Insert a person into the founders table (if not already present) and
+        create an investor_team junction row.
+        """
+        sql_person = """
+            INSERT OR IGNORE INTO founders
+                (uuid, permalink, first_name, last_name, primary_job_title,
+                 linkedin, gender)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        sql_team = """
+            INSERT OR IGNORE INTO investor_team
+                (investor_uuid, person_uuid, role, title)
+            VALUES (?, ?, ?, ?)
+        """
+        with self._connect() as conn:
+            linkedin = person.get("linkedin")
+            if isinstance(linkedin, dict):
+                linkedin = linkedin.get("value")
+            conn.execute(sql_person, (
+                person["uuid"],
+                person.get("permalink"),
+                person.get("first_name"),
+                person.get("last_name"),
+                person.get("primary_job_title"),
+                linkedin,
+                person.get("gender"),
+            ))
+            conn.execute(sql_team, (
+                investor_uuid,
+                person["uuid"],
+                role,
+                title,
+            ))
+
+    def get_org_investors(self) -> list:
+        """Return all organization-type investors."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT uuid, permalink, name FROM investors "
+                "WHERE entity_def_id = 'organization'"
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_person_investors_not_in_founders(self) -> list:
+        """Return person-type investors not already in the founders table."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT i.uuid, i.permalink, i.name "
+                "FROM investors i "
+                "WHERE i.entity_def_id = 'person' "
+                "  AND i.uuid NOT IN (SELECT uuid FROM founders)"
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_investor_team_edges(self) -> list:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT investor_uuid, person_uuid, role, title FROM investor_team"
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_investor_team_stats(self) -> dict:
+        queries = {
+            "num_inv_team_rows":           "SELECT COUNT(*) FROM investor_team",
+            "num_inv_team_board":          "SELECT COUNT(*) FROM investor_team WHERE role='board_member'",
+            "num_inv_team_csuite":         "SELECT COUNT(*) FROM investor_team WHERE role='c_suite'",
+            "num_inv_team_vp":             "SELECT COUNT(*) FROM investor_team WHERE role='vp'",
+            "num_inv_team_director":       "SELECT COUNT(*) FROM investor_team WHERE role='director'",
+            "num_inv_team_advisor":        "SELECT COUNT(*) FROM investor_team WHERE role='advisor'",
+            "num_inv_team_founder":        "SELECT COUNT(*) FROM investor_team WHERE role='founder'",
+            "num_inv_team_investor":       "SELECT COUNT(*) FROM investor_team WHERE role='investor'",
+            "num_inv_team_other":          "SELECT COUNT(*) FROM investor_team WHERE role='other'",
+            "num_investors_with_team":     "SELECT COUNT(DISTINCT investor_uuid) FROM investor_team",
+            "num_unique_inv_team_people":  "SELECT COUNT(DISTINCT person_uuid) FROM investor_team",
+        }
+        stats = {}
+        with self._connect() as conn:
+            for key, sql in queries.items():
+                stats[key] = conn.execute(sql).fetchone()[0]
+        return stats
+
     def get_portfolio_edges(self) -> list:
         with self._connect() as conn:
             rows = conn.execute(
@@ -1019,6 +1115,9 @@ class SQLiteStore:
         },
         "companies": {
             "uuid": "company_uuid",
+        },
+        "investor_team": {
+            "person_uuid": "person_uuid",
         },
     }
 
