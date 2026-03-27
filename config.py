@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 # -- API --
-API_KEY    = os.getenv("CB_API_KEY", "33c812e7ccbd8ccb628926236d902989")
+API_KEY    = os.getenv("CB_API_KEY", "")
 BASE_URL   = "https://api.crunchbase.com/v4/data"
 AUTH_PARAM = {"user_key": API_KEY}
 

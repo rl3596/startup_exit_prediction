@@ -1,0 +1,38 @@
+# Data files (large, contains API data)
+/data/
+preqin/data/*
+!preqin/data/DATA_DICTIONARY.md
+
+# Database
+*.db
+*.db-wal
+*.db-shm
+
+# Logs
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# WRDS credentials
+.pgpass
