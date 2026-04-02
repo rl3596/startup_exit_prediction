@@ -1,0 +1,54 @@
+HistGradientBoosting - Startup Success Prediction Results
+==================================================
+
+CV ROC-AUC (5-fold): 0.7908 (+/- 0.0209)
+Test ROC-AUC:        0.7735
+Test PR-AUC:         0.5067
+
+Confusion Matrix:
+[[960 136]
+ [118 105]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.89      0.88      0.88      1096
+           1       0.44      0.47      0.45       223
+
+    accuracy                           0.81      1319
+   macro avg       0.66      0.67      0.67      1319
+weighted avg       0.81      0.81      0.81      1319
+
+
+Feature Importances:
+  avg_investor_degree                 0.1035
+  company_degree                      0.0716
+  avg_investor_betweenness            0.0358
+  company_pagerank                    0.0334
+  investor_coinv_density              0.0300
+  avg_investor_pagerank               0.0263
+  investor_clustering_coeff           0.0237
+  employees_ordinal                   0.0233
+  company_betweenness                 0.0173
+  max_investor_pagerank               0.0151
+  num_founders                        0.0132
+  max_investor_degree                 0.0129
+  fund_type_pre_seed                  0.0110
+  team_size                           0.0077
+  avg_founder_prior_jobs              0.0069
+  max_founder_prior_jobs              0.0063
+  c_suite_count                       0.0050
+  founder_has_phd                     0.0034
+  fund_type_seed                      0.0024
+  fund_type_grant                     0.0019
+  fund_type_series_c                  0.0011
+  fund_type_series_unknown            0.0009
+  fund_type_other                     0.0009
+  fund_type_series_a                  0.0004
+  fund_type_series_b                  0.0004
+  founder_has_mba                     0.0003
+  board_count                         0.0002
+  fund_type_non_equity_assistance     0.0001
+  advisor_count                       0.0001
+  company_degree_centrality           0.0000
+  num_lead_investors                  0.0000
