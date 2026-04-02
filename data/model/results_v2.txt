@@ -1,0 +1,53 @@
+XGBoost Model Comparison — Network vs. Network + Edu/Job Features
+======================================================================
+
+Model: Network + Tabular
+----------------------------------------
+  Features:     31
+  CV ROC-AUC:   0.7939 (+/- 0.0228)
+  Test ROC-AUC: 0.7854
+  Test PR-AUC:  0.5212
+  Confusion Matrix:
+[[1057   39]
+ [ 147   76]]
+  Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.88      0.96      0.92      1096
+           1       0.66      0.34      0.45       223
+
+    accuracy                           0.86      1319
+   macro avg       0.77      0.65      0.68      1319
+weighted avg       0.84      0.86      0.84      1319
+
+
+Model: Network + Tabular + Edu/Job
+----------------------------------------
+  Features:     45
+  CV ROC-AUC:   0.7928 (+/- 0.0197)
+  Test ROC-AUC: 0.7999
+  Test PR-AUC:  0.5018
+  Confusion Matrix:
+[[1048   48]
+ [ 155   68]]
+  Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.87      0.96      0.91      1096
+           1       0.59      0.30      0.40       223
+
+    accuracy                           0.85      1319
+   macro avg       0.73      0.63      0.66      1319
+weighted avg       0.82      0.85      0.83      1319
+
+
+======================================================================
+COMPARISON SUMMARY
+======================================================================
+
+Model                                   CV AUC   Test AUC     PR-AUC
+----------------------------------------------------------------------
+Network + Tabular                       0.7939     0.7854     0.5212
+Network + Tabular + Edu/Job             0.7928     0.7999     0.5018
+
+Improvement (edu/job features):  ROC-AUC +0.0145,  PR-AUC -0.0194
