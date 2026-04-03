@@ -154,6 +154,66 @@ This produces 11 CSVs with cascading cleanup (only retaining entities connected 
 | Full (`data/export/`) | 12,348 | 11.2% success, 88.8% not, 19.5% null |
 | Filtered (`data/export_filtered/`) | 6,704 | 16.6% success, 81.7% not, 1.7% null |
 
+## Model Training
+
+After data collection and export, we engineer network features and train models to predict startup success.
+
+### Feature Engineering
+
+```bash
+# Build graph-derived features (centrality, PageRank, co-investment)
+python models/xgboost/build_features.py
+
+# Build education/employment network features (alumni overlap, social proximity)
+python models/xgboost/build_edu_job_features.py
+```
+
+This produces two CSVs in `data/model/`:
+- `feature_matrix.csv` — 31 network + tabular features (6,704 companies)
+- `edu_job_features.csv` — 14 education/employment network features
+
+### Train Models
+
+```bash
+# V1: Network + tabular features only (31 features)
+python models/xgboost/train_model.py
+
+# V2: Network + tabular + edu/job features (45 features), with V1 comparison
+python models/xgboost/train_model_v2.py
+```
+
+### Model Results
+
+| Model | Features | Test ROC-AUC | Test PR-AUC | Accuracy |
+|-------|:--------:|:------------:|:-----------:|:--------:|
+| **XGBoost V1** (network + tabular) | 31 | 0.785 | 0.521 | 85.8% |
+| **XGBoost V2** (+ edu/job) | 45 | 0.800 | 0.502 | 84.6% |
+| Logistic Lasso | 20 | 0.849 | — | 77.9% |
+| LightGBM | — | — | — | — |
+| Random Forest | — | — | — | — |
+| GNN | — | — | — | — |
+
+**Key finding**: Network features dominate predictions. The top 7 features by importance are all graph-derived (investor degree, company centrality, co-investment density). Investor connectivity is the single strongest predictor of startup success.
+
+### All Models
+
+The `models/` directory contains all team members' model implementations:
+
+| Model | File | Author |
+|-------|------|--------|
+| XGBoost (V1 + V2) | `models/xgboost/` | Ray |
+| Logistic Regression | `models/weilong_logistic.py` | Weilong |
+| LightGBM | `models/henry_lightgbm_model_training.ipynb` | Henry |
+| Random Forest | `models/rf_startup_exit.ipynb` | — |
+| GNN | `models/JP1_GNN_prototype.ipynb` | JP |
+
+### Feature Documentation
+
+- [`data/model/FEATURE_GUIDE.md`](data/model/FEATURE_GUIDE.md) — Network + tabular feature descriptions (English)
+- [`data/model/FEATURE_GUIDE_CN.md`](data/model/FEATURE_GUIDE_CN.md) — Same in simplified Chinese
+- [`data/model/EDU_JOB_FEATURE_GUIDE.md`](data/model/EDU_JOB_FEATURE_GUIDE.md) — Education/employment feature descriptions (English)
+- [`data/model/EDU_JOB_FEATURE_GUIDE_CN.md`](data/model/EDU_JOB_FEATURE_GUIDE_CN.md) — Same in simplified Chinese
+
 ## Project Structure
 
 ```
@@ -174,6 +234,16 @@ crunchbase_pipeline/
 │   ├── phase4b_team.py      # Company team members (Phase 7)
 │   ├── phase8_investor_team.py  # Investor org teams
 │   └── phase6_validate.py   # Data quality report
+├── models/
+│   ├── xgboost/
+│   │   ├── build_features.py        # Network feature engineering
+│   │   ├── build_edu_job_features.py # Edu/job feature engineering
+│   │   ├── train_model.py           # V1 model training
+│   │   └── train_model_v2.py        # V2 model training + comparison
+│   ├── weilong_logistic.py           # Logistic regression
+│   ├── henry_lightgbm_model_training.ipynb  # LightGBM
+│   ├── rf_startup_exit.ipynb         # Random Forest
+│   └── JP1_GNN_prototype.ipynb       # Graph Neural Network
 ├── storage/
 │   ├── sqlite_store.py      # SQLite DB operations (upsert, export)
 │   ├── checkpoint.py        # JSON checkpoint manager
@@ -182,7 +252,8 @@ crunchbase_pipeline/
 │   ├── db/crunchbase.db     # SQLite database (WAL mode)
 │   ├── checkpoints/         # Phase checkpoint files (JSON)
 │   ├── export/              # Full dataset CSVs + graph files
-│   └── export_filtered/     # Filtered dataset ($1M+ funding) + DATA_GUIDE.md
+│   ├── export_filtered/     # Filtered dataset ($1M+ funding) + DATA_GUIDE.md
+│   └── model/               # Feature matrices, trained models, results, charts
 ├── logs/
 │   └── pipeline.log         # Runtime log
 ├── docs/
@@ -197,7 +268,8 @@ A separate data source using Preqin venture deal data via WRDS. Located in `preq
 
 ## Tech Stack
 
-- **Python 3.13** with requests, networkx, pandas, tqdm
+- **Python 3.13** with requests, networkx, pandas, tqdm, scikit-learn, xgboost, matplotlib
 - **SQLite** (WAL mode) for persistent storage
 - **NetworkX** for heterogeneous graph construction
+- **XGBoost / scikit-learn** for ML models
 - **Crunchbase API v4** (Enterprise tier, 200 RPM)

@@ -30,6 +30,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import config
 
 # Try to import XGBoost; fall back to sklearn if unavailable
