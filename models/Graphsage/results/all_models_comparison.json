@@ -1,0 +1,10 @@
+{
+  "xgboost_v1": 0.7854,
+  "xgboost_v2": 0.7999,
+  "graphsage_v1": 0.7223,
+  "graphsage_v2": 0.7325,
+  "evolvegcn_v1": 0.756,
+  "evolvegcn_v2": 0.739,
+  "tgn_v1": 0.687,
+  "tgn_v2": 0.67
+}

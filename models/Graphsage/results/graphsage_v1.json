@@ -1,0 +1,31 @@
+{
+  "model": "GraphSAGE (Heterogeneous)",
+  "version": "v1",
+  "node_types": [
+    "company",
+    "investor",
+    "person",
+    "university"
+  ],
+  "node_feat_dims": {
+    "company": 31,
+    "investor": 4,
+    "person": 4,
+    "university": 2
+  },
+  "num_edge_types": 16,
+  "num_params": 797377,
+  "hidden_dim": 128,
+  "out_dim": 64,
+  "epochs_run": 100,
+  "train_time_secs": 281.8,
+  "num_train": 2658,
+  "num_val": 1269,
+  "num_test": 2666,
+  "pos_weight": 9.11,
+  "train_roc_auc": 0.9507,
+  "val_roc_auc": 0.8619,
+  "test_roc_auc": 0.7223,
+  "test_ap": 0.5422,
+  "best_val_auc": 0.8619
+}

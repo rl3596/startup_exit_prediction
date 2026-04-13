@@ -1,0 +1,96 @@
+
+============================================================
+GraphSAGE — version=v1
+============================================================
+[data] node feature dims: {'company': 31, 'investor': 4, 'person': 4, 'university': 2}
+[data] 16 edge types
+[data] train=2658 val=1269 test=2666
+[train] pos_weight = 9.11
+[model] parameters: 797,377
+  ep  1 loss=1.2514 val_auc=0.7658 test_auc=0.6216 lr=0.00500
+  ep  5 loss=1.1458 val_auc=0.7960 test_auc=0.5959 lr=0.00497
+  ep 10 loss=1.0147 val_auc=0.7879 test_auc=0.5725 lr=0.00488
+  ep 15 loss=0.8486 val_auc=0.7716 test_auc=0.5836 lr=0.00473
+  ep 20 loss=0.7032 val_auc=0.7924 test_auc=0.6325 lr=0.00452
+  ep 25 loss=0.5816 val_auc=0.8466 test_auc=0.7111 lr=0.00427
+  ep 30 loss=0.5148 val_auc=0.8619 test_auc=0.7223 lr=0.00397
+  ep 35 loss=0.4927 val_auc=0.8567 test_auc=0.7043 lr=0.00363
+  ep 40 loss=0.4118 val_auc=0.8555 test_auc=0.6548 lr=0.00327
+  ep 45 loss=0.3569 val_auc=0.8174 test_auc=0.6202 lr=0.00289
+  ep 50 loss=0.3420 val_auc=0.8185 test_auc=0.6419 lr=0.00250
+  ep 55 loss=0.3315 val_auc=0.8390 test_auc=0.6627 lr=0.00211
+  ep 60 loss=0.3147 val_auc=0.8149 test_auc=0.6381 lr=0.00173
+  ep 65 loss=0.2943 val_auc=0.8040 test_auc=0.6314 lr=0.00137
+  ep 70 loss=0.2864 val_auc=0.7889 test_auc=0.6234 lr=0.00103
+  ep 75 loss=0.2623 val_auc=0.7774 test_auc=0.6203 lr=0.00073
+  ep 80 loss=0.2728 val_auc=0.7645 test_auc=0.6176 lr=0.00048
+  ep 85 loss=0.2628 val_auc=0.7499 test_auc=0.6112 lr=0.00027
+  ep 90 loss=0.2705 val_auc=0.7438 test_auc=0.6079 lr=0.00012
+  ep 95 loss=0.2660 val_auc=0.7418 test_auc=0.6064 lr=0.00003
+  ep100 loss=0.2496 val_auc=0.7411 test_auc=0.6062 lr=0.00000
+[train] 281.8s total
+
+[RESULTS — V1]
+  Train ROC-AUC: 0.9507
+  Val   ROC-AUC: 0.8619
+  Test  ROC-AUC: 0.7223
+  Test  AP:      0.5422
+  Saved -> /Users/ray/Desktop/4511projects/crunchbase_pipeline/models/graphsage/results/graphsage_v1.json
+
+============================================================
+GraphSAGE — version=v2
+============================================================
+[V2] company features expanded to 45
+[data] node feature dims: {'company': 45, 'investor': 4, 'person': 4, 'university': 2}
+[data] 16 edge types
+[data] train=2658 val=1269 test=2666
+[train] pos_weight = 9.11
+[model] parameters: 799,169
+  ep  1 loss=1.2506 val_auc=0.8166 test_auc=0.6677 lr=0.00500
+  ep  5 loss=1.1260 val_auc=0.7984 test_auc=0.6101 lr=0.00497
+  ep 10 loss=0.9261 val_auc=0.7682 test_auc=0.5857 lr=0.00488
+  ep 15 loss=0.7391 val_auc=0.7363 test_auc=0.5172 lr=0.00473
+  ep 20 loss=0.6502 val_auc=0.8356 test_auc=0.7239 lr=0.00452
+  ep 25 loss=0.4986 val_auc=0.8553 test_auc=0.7325 lr=0.00427
+  ep 30 loss=0.4270 val_auc=0.8553 test_auc=0.7286 lr=0.00397
+  ep 35 loss=0.3933 val_auc=0.8390 test_auc=0.7069 lr=0.00363
+  ep 40 loss=0.3496 val_auc=0.8119 test_auc=0.6494 lr=0.00327
+  ep 45 loss=0.3127 val_auc=0.8026 test_auc=0.6296 lr=0.00289
+  ep 50 loss=0.3000 val_auc=0.7961 test_auc=0.6267 lr=0.00250
+  ep 55 loss=0.2570 val_auc=0.7824 test_auc=0.6165 lr=0.00211
+  ep 60 loss=0.2447 val_auc=0.7858 test_auc=0.6220 lr=0.00173
+  ep 65 loss=0.2290 val_auc=0.7807 test_auc=0.6232 lr=0.00137
+  ep 70 loss=0.2136 val_auc=0.7762 test_auc=0.6212 lr=0.00103
+  ep 75 loss=0.2005 val_auc=0.7803 test_auc=0.6255 lr=0.00073
+  ep 80 loss=0.1950 val_auc=0.7795 test_auc=0.6224 lr=0.00048
+  ep 85 loss=0.1856 val_auc=0.7613 test_auc=0.6048 lr=0.00027
+  ep 90 loss=0.1701 val_auc=0.7702 test_auc=0.6142 lr=0.00012
+  ep 95 loss=0.1834 val_auc=0.7685 test_auc=0.6133 lr=0.00003
+  ep100 loss=0.1794 val_auc=0.7675 test_auc=0.6125 lr=0.00000
+  Early stopping at epoch 100
+[train] 293.0s total
+
+[RESULTS — V2]
+  Train ROC-AUC: 0.9518
+  Val   ROC-AUC: 0.8553
+  Test  ROC-AUC: 0.7325
+  Test  AP:      0.5319
+  Saved -> /Users/ray/Desktop/4511projects/crunchbase_pipeline/models/graphsage/results/graphsage_v2.json
+
+============================================================
+COMPARISON: V1 vs V2
+============================================================
+Metric                       V1         V2      Delta
+----------------------------------------------------
+  train_roc_auc          0.9507     0.9518    +0.0011
+  val_roc_auc            0.8619     0.8553    -0.0066
+  test_roc_auc           0.7223     0.7325    +0.0102
+  test_ap                0.5422     0.5319    -0.0103
+
+COMPARISON TO XGBOOST (from prior results):
+  XGBoost V1:       test_roc_auc = 0.7854
+  XGBoost V2:       test_roc_auc = 0.7999
+  GraphSAGE V1:     test_roc_auc = 0.7223
+  GraphSAGE V2:     test_roc_auc = 0.7325
+
+  Saved all_models_comparison.json
