@@ -201,11 +201,13 @@ The `models/` directory contains all team members' model implementations:
 
 | Model | File | Author |
 |-------|------|--------|
-| XGBoost (V1 + V2) | `models/xgboost/` | Ray |
+| XGBoost | `models/xgboost/` | Ray |
 | Logistic Regression | `models/weilong_logistic.py` | Weilong |
 | LightGBM | `models/henry_lightgbm_model_training.ipynb` | Henry |
-| Random Forest | `models/rf_startup_exit.ipynb` | — |
-| GNN | `models/JP1_GNN_prototype.ipynb` | JP |
+| Nod2Vec+XGBoost | | Lin |
+| Random Forest | `models/rf_startup_exit.ipynb` | Leo |
+| GNN | `models/JP1_GNN_prototype.ipynb` | Carrie |
+| GraphSage | `models/graphsage/` | Ray |
 
 ### Feature Documentation
 
