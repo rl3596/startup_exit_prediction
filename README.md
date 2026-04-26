@@ -175,21 +175,23 @@ This produces two CSVs in `data/model/`:
 ### Train Models
 
 ```bash
-# Tabular models (XGBoost): V1 = 31 features, V2 = 45 features (+ edu/job)
-python models/xgboost/train_model.py
-python models/xgboost/train_model_v2.py
+# LightGBM (Henry)
+jupyter notebook models/henry_lightgbm_model_training.ipynb
 
-# Heterogeneous GraphSAGE (chronological split: train ≤2020, val 2021-22, test ≥2023)
+# Node2Vec + Logistic Regression / + XGBoost (Lin)
+jupyter notebook models/Node2Vec.ipynb
+jupyter notebook models/Node2Vec+XGBoost.ipynb
+
+# Random Forest (Leo)
+jupyter notebook models/rf_startup_exit.ipynb
+
+# Homogeneous GraphSAGE + Heterogeneous GAT (Carrie)
+jupyter notebook models/GNN_phrase2_hetero.ipynb
+
+# Heterogeneous GraphSAGE — chronological split (Ray)
 python models/Graphsage/build_graph_data.py
 python models/Graphsage/train_graphsage.py --version v1
 python models/Graphsage/train_graphsage.py --version v2
-
-# Temporal GNNs
-python models/temporal/build_temporal_data.py
-python models/temporal/train_evolvegcn.py --version v1 --epochs 40
-python models/temporal/train_evolvegcn.py --version v2 --epochs 40
-python models/temporal/train_tgn.py       --version v1 --epochs 3
-python models/temporal/train_tgn.py       --version v2 --epochs 3
 ```
 
 ### Model Results
@@ -198,25 +200,44 @@ Two feature sets are evaluated for every model:
 - **V1** — 31 network + tabular features (centrality, PageRank, co-investment density, fund types, employees, …)
 - **V2** — V1 + 14 education/employment features (alumni overlap, FAANG experience, university PageRank, …) = 45 features
 
-| Model | Features | Test ROC-AUC | Test AP (PR-AUC) | Notes |
-|-------|:--------:|:------------:|:----------------:|-------|
-| **XGBoost V1**       | 31 | 0.785 | 0.521 | Random 80/20 split |
-| **XGBoost V2**       | 45 | **0.800** | 0.502 | Random 80/20 split — best classifier |
-| **GraphSAGE V1** (heterogeneous) | 31 | 0.722 | 0.542 | Chronological split (test ≥ 2023, n=2,666) |
-| **GraphSAGE V2** (heterogeneous) | 45 | 0.733 | 0.532 | Chronological split — only GNN where V2 helps AUC |
-| **EvolveGCN V1**     | 31 | 0.756 | 0.567 | Yearly snapshots + GRU |
-| **EvolveGCN V2**     | 45 | 0.739 | **0.599** | Highest PR-AUC overall |
-| **TGN V1**           | 31 | 0.687 | 0.513 | Continuous-time event stream |
-| **TGN V2**           | 45 | 0.670 | 0.501 | Edu/job features hurt slightly |
+| Model | Author | Features | Test ROC-AUC | Test PR-AUC | Test Accuracy |
+|-------|:------:|:--------:|:------------:|:-----------:|:-------------:|
+| **LightGBM V1**                  | Henry  | 31 | 0.7854 | 0.5212 | 85.8% |
+| **LightGBM V2**                  | Henry  | 45 | 0.7999 | 0.5018 | 84.6% |
+| **Node2Vec + LR V1**             | Lin    | 31 + emb | 0.8149 | 0.5500 | 76.4% |
+| **Node2Vec + LR V2**             | Lin    | 45 + emb | 0.8152 | 0.5596 | 75.1% |
+| **Node2Vec + XGBoost V1**        | Lin    | 31 + emb | 0.8217 | **0.5664** | 82.2% |
+| **Node2Vec + XGBoost V2**        | Lin    | 45 + emb | **0.8253** | 0.5628 | 81.4% |
+| **Random Forest V1**             | Leo    | 31 | 0.7877 | 0.5047 | — |
+| **Random Forest V2**             | Leo    | 45 | 0.7730 | 0.4805 | 75.8% |
+| **GraphSAGE (homogeneous) V1**   | Carrie | 31 | 0.8015 | 0.5141 | 73.8% |
+| **GraphSAGE (homogeneous) V2**   | Carrie | 45 | 0.7960 | 0.5137 | 73.1% |
+| **GAT (heterogeneous) V1**       | Carrie | 31 | 0.7973 | 0.5171 | 76.19% |
+| **GAT (heterogeneous) V2**       | Carrie | 45 | 0.7886 | 0.5124 | 76.19% |
+| **GraphSAGE (heterogeneous) V1** | Ray    | 31 | 0.7223 | 0.5422 | — (chrono split) |
+| **GraphSAGE (heterogeneous) V2** | Ray    | 45 | 0.7325 | 0.5319 | — (chrono split) |
 
-> **Note on splits**: XGBoost results use a random 80/20 stratified split (test n=1,319). The graph models use a **chronological** split (train ≤ 2020, val 2021-22, test ≥ 2023, n=2,666) — a strictly harder, more realistic generalization test.
+> **Note on splits**: Most models use a random 80/20 stratified split (test n=1,319). Ray's heterogeneous GraphSAGE uses a **chronological** split (train ≤ 2020, val 2021-22, test ≥ 2023, n=2,666) — a strictly harder, more realistic generalization test that explains the lower headline AUC.
+
+**Best overall**: Lin's **Node2Vec + XGBoost** — V2 leads on ROC-AUC (**0.8253**), V1 leads on PR-AUC (**0.5664**).
+
+#### Bonus tasks (Lin's Node2Vec + XGBoost)
+
+In addition to classification, the Node2Vec embedding pipeline supports two extra tasks:
+
+- **Link Prediction** (predicting future investor → company edges)
+  - ROC-AUC **0.658**, PR-AUC **0.749**
+  - Positive class precision **0.93**, recall **0.27** — the model is highly selective: when it predicts a tie, it is almost always right, but it misses many true ties.
+- **Node Ranking** (most influential connector investors)
+  - Connector Score = `0.7 × PageRank + 0.3 × Degree Centrality`
+  - Top investors learned from the graph structure: Y Combinator, Alumni Ventures, Techstars, Andreessen Horowitz, Sequoia Capital, …
 
 **Key findings**
 
-1. **Network features dominate.** Across every model, the top features are graph-derived: `avg_investor_degree` (#1), `company_degree`, `avg_investor_betweenness`, `company_pagerank`, `investor_coinv_density`. Investor connectivity is the single strongest predictor of startup success.
-2. **Education/job features add ~+1.5% AUC for tabular models** (XGBoost) but are neutral-to-slightly-negative for GNNs — likely because GNN message passing already captures most of the social-network signal, and ~40% missingness becomes noise on featureless nodes.
-3. **Temporal models add unique capabilities** — link prediction (EvolveGCN reaches 0.80 AUC for predicting next-year investor → company edges) and influence ranking (top-5 investors learned without labels: Y Combinator, Alumni Ventures, Techstars, Andreessen Horowitz, Sequoia).
-4. **`is_success` is a static label**, so XGBoost still wins raw AUC on classification. Temporal/graph models shine on tasks where structure or "when" matters.
+1. **Network features dominate.** Across every model, the top predictors are graph-derived: `avg_investor_degree`, `company_degree`, `avg_investor_betweenness`, `company_pagerank`, `investor_coinv_density`. Investor connectivity is the single strongest signal of startup success.
+2. **Education/job features (V2) add ~+0.5–1.5% AUC for tabular models** (LightGBM, Node2Vec+XGBoost) but are neutral-to-slightly-negative for the GNNs — likely because graph message passing already captures most of the social-network signal that V2 features encode, and ~40% missingness becomes noise on otherwise sparse nodes.
+3. **Embedding-based models lead.** Lin's Node2Vec + XGBoost V2 is the top model on both ROC-AUC and PR-AUC, narrowly beating LightGBM V2 and the GNNs — combining unsupervised structural embeddings with a strong tabular classifier outperforms either alone.
+4. **GNNs are competitive but not dominant.** Carrie's homogeneous GraphSAGE and heterogeneous GAT both reach ~0.79–0.80 AUC, on par with the tabular ensembles. Ray's heterogeneous GraphSAGE on a chronological split (the realistic deployment scenario) drops to ~0.73 — the honest "deploy in 2024" number.
 
 ### All Models
 
@@ -224,20 +245,18 @@ The `models/` directory contains all team members' model implementations:
 
 | Model | File / Folder | Author |
 |-------|---------------|--------|
-| XGBoost (V1 + V2)              | `models/xgboost/`                            | Ray |
-| Heterogeneous GraphSAGE        | `models/Graphsage/`                          | Ray |
-| Temporal GNNs (EvolveGCN, TGN) | `models/temporal/`                           | Ray |
-| Logistic Regression            | `models/weilong_logistic.py`                 | Weilong |
-| LightGBM                       | `models/henry_lightgbm_model_training.ipynb` | Henry |
-| Random Forest                  | `models/rf_startup_exit.ipynb`               | Leo |
-| Node2Vec + LR / + XGBoost      | `models/Node2Vec*.ipynb`                     | Lin |
-| Heterogeneous GAT / GNN        | `models/GNN_phrase2_hetero.ipynb`            | Carrie |
-| GNN prototype                  | `models/JP1_GNN_prototype.ipynb`             | JP |
+| LightGBM (V1 + V2)                         | `models/henry_lightgbm_model_training.ipynb` | Henry  |
+| Node2Vec + Logistic Regression (V1 + V2)   | `models/Node2Vec.ipynb`                      | Lin    |
+| Node2Vec + XGBoost (V1 + V2 + Link Pred + Node Ranking) | `models/Node2Vec+XGBoost.ipynb` | Lin    |
+| Random Forest (V1 + V2)                    | `models/rf_startup_exit.ipynb`               | Leo    |
+| Homogeneous GraphSAGE + Heterogeneous GAT  | `models/GNN_phrase2_hetero.ipynb`            | Carrie |
+| Heterogeneous GraphSAGE (V1 + V2)          | `models/Graphsage/`                          | Ray    |
+| Logistic Regression                        | `models/weilong_logistic.py`                 | Weilong |
+| GNN prototype                              | `models/JP1_GNN_prototype.ipynb`             | JP     |
 
 ### Detailed Model Reports
 
-- [`models/Graphsage/GraphSAGE_Results.docx`](models/Graphsage/GraphSAGE_Results.docx) — Heterogeneous GraphSAGE: architecture, ablation vs XGBoost, head-to-head with team models
-- [`models/temporal/RESULTS.md`](models/temporal/RESULTS.md) — EvolveGCN + TGN: classification, link prediction, and node-ranking results
+- [`models/Graphsage/GraphSAGE_Results.docx`](models/Graphsage/GraphSAGE_Results.docx) — Heterogeneous GraphSAGE (Ray): architecture, ablation, head-to-head with team models
 
 ### Feature Documentation
 
@@ -268,28 +287,20 @@ crunchbase_pipeline/
 │   └── phase6_validate.py   # Data quality report
 ├── models/
 │   ├── xgboost/
-│   │   ├── build_features.py        # Network feature engineering
-│   │   ├── build_edu_job_features.py # Edu/job feature engineering
-│   │   ├── train_model.py           # V1 model training
-│   │   └── train_model_v2.py        # V2 model training + comparison
+│   │   ├── build_features.py        # Network feature engineering (shared by all models)
+│   │   └── build_edu_job_features.py # Edu/job feature engineering (shared by all models)
 │   ├── Graphsage/
 │   │   ├── build_graph_data.py      # Build heterogeneous PyG graph
-│   │   ├── train_graphsage.py       # Heterogeneous GraphSAGE (V1 + V2)
+│   │   ├── train_graphsage.py       # Heterogeneous GraphSAGE (V1 + V2) — Ray
 │   │   ├── results/                 # JSON metrics + training logs
 │   │   └── GraphSAGE_Results.docx   # Detailed results report
-│   ├── temporal/
-│   │   ├── build_temporal_data.py   # Event stream + yearly snapshots
-│   │   ├── train_evolvegcn.py       # EvolveGCN-style temporal GNN
-│   │   ├── train_tgn.py             # TGN (continuous-time)
-│   │   ├── results/                 # JSON metrics + training logs
-│   │   └── RESULTS.md               # Detailed temporal-model report
-│   ├── Node2Vec.ipynb               # Node2Vec embeddings
-│   ├── Node2Vec+XGBoost.ipynb       # Node2Vec + XGBoost classifier
-│   ├── GNN_phrase2_hetero.ipynb     # Heterogeneous GAT
-│   ├── weilong_logistic.py          # Logistic regression
-│   ├── henry_lightgbm_model_training.ipynb  # LightGBM
-│   ├── rf_startup_exit.ipynb        # Random Forest
-│   └── JP1_GNN_prototype.ipynb      # GNN prototype
+│   ├── Node2Vec.ipynb                       # Node2Vec + Logistic Regression — Lin
+│   ├── Node2Vec+XGBoost.ipynb               # Node2Vec + XGBoost (+ Link Pred + Node Ranking) — Lin
+│   ├── GNN_phrase2_hetero.ipynb             # Homogeneous GraphSAGE + Heterogeneous GAT — Carrie
+│   ├── henry_lightgbm_model_training.ipynb  # LightGBM — Henry
+│   ├── rf_startup_exit.ipynb                # Random Forest — Leo
+│   ├── weilong_logistic.py                  # Logistic regression — Weilong
+│   └── JP1_GNN_prototype.ipynb              # GNN prototype — JP
 ├── storage/
 │   ├── sqlite_store.py      # SQLite DB operations (upsert, export)
 │   ├── checkpoint.py        # JSON checkpoint manager
