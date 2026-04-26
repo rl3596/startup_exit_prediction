@@ -192,6 +192,9 @@ jupyter notebook models/GNN_phrase2_hetero.ipynb
 python models/Graphsage/build_graph_data.py
 python models/Graphsage/train_graphsage.py --version v1
 python models/Graphsage/train_graphsage.py --version v2
+
+# Early baseline: Logistic Regression on tabular features only (Weilong)
+python models/weilong_logistic.py
 ```
 
 ### Model Results
@@ -232,12 +235,53 @@ In addition to classification, the Node2Vec embedding pipeline supports two extr
   - Connector Score = `0.7 × PageRank + 0.3 × Degree Centrality`
   - Top investors learned from the graph structure: Y Combinator, Alumni Ventures, Techstars, Andreessen Horowitz, Sequoia Capital, …
 
+#### Early baseline (Weilong's Logistic Regression)
+
+Before the team adopted the network-feature pipeline, Weilong trained an **early
+baseline using logistic regression on tabular features only** — no network
+features, no education/employment features. It uses a different cohort
+construction (age-filtered with point-in-time first-12-month features), so its
+metrics are **not directly comparable** to the V1/V2 results above.
+
+| Model | Author | Features | Test ROC-AUC | Test Accuracy | Cohort |
+|-------|:------:|:--------:|:------------:|:-------------:|--------|
+| **Logistic Regression (baseline)** | Weilong | 8 tabular | ~0.85 | ~78% | 6,000+ companies, ~48% success rate |
+
+**Predictors used** (no graph features):
+
+| Direction | Feature | Weight | Meaning |
+|---|---|---:|---|
+| ▲ Positive | `early_funding_usd`     | **+5.02** | Total funding in first 12 months — by far the strongest predictor |
+| ▲ Positive | `team_size`             | +1.10 | Initial team size |
+| ▲ Positive | `has_series_a_24m`      | +0.77 | Closed Series A within 24 months of first funding |
+| ▼ Negative | `age_months`            | −0.66 | Stagnation: companies stuck in early stage too long |
+| ▼ Negative | `advisor_count`         | −0.27 | Bloated advisory boards |
+| ▼ Negative | `early_round_count`     | −0.25 | Many small bridge rounds (vs. one decisive round) |
+| ▼ Negative | `c_suite_count`         | −0.18 | Top-heavy leadership |
+| ◆ Zero     | `early_top_investor_deals_max/mean` | ~0.00 | Investor deal-volume / activity level |
+
+**Why the AUC looks higher than the team's V1/V2 models**: Weilong's labeling
+pipeline filters out companies younger than 24 months without a success and drops
+companies with missing first-year funding amounts. The remaining cohort has a
+~48% success rate (vs. ~16% in the team's standard 6,704-company filtered
+dataset), which is a much easier classification problem. The 0.85 AUC reflects
+the easier class balance, not a stronger model — the dominant feature
+(`early_funding_usd`) is essentially a definitional component of the success
+label here.
+
+**Why this baseline is still useful**: It establishes the floor for "what can
+you predict from purely tabular signals?" and shows that **capital volume
+dominates the tabular signal** — every later model's job is to find additional
+signal *beyond* that, which is where network connectivity, alumni overlap, and
+graph embeddings start paying off.
+
 **Key findings**
 
-1. **Network features dominate.** Across every model, the top predictors are graph-derived: `avg_investor_degree`, `company_degree`, `avg_investor_betweenness`, `company_pagerank`, `investor_coinv_density`. Investor connectivity is the single strongest signal of startup success.
-2. **Education/job features (V2) add ~+0.5–1.5% AUC for tabular models** (LightGBM, Node2Vec+XGBoost) but are neutral-to-slightly-negative for the GNNs — likely because graph message passing already captures most of the social-network signal that V2 features encode, and ~40% missingness becomes noise on otherwise sparse nodes.
-3. **Embedding-based models lead.** Lin's Node2Vec + XGBoost V2 is the top model on both ROC-AUC and PR-AUC, narrowly beating LightGBM V2 and the GNNs — combining unsupervised structural embeddings with a strong tabular classifier outperforms either alone.
-4. **GNNs are competitive but not dominant.** Carrie's homogeneous GraphSAGE and heterogeneous GAT both reach ~0.79–0.80 AUC, on par with the tabular ensembles. Ray's heterogeneous GraphSAGE on a chronological split (the realistic deployment scenario) drops to ~0.73 — the honest "deploy in 2024" number.
+- **Baseline (Weilong's logistic regression):** *how much* a company raises in its first year and *how fast* it reaches Series A explain most of what tabular features can — capital volume saturates the tabular signal. Everything beyond that — network features, embeddings, GNNs — is the team's attempt to extract signal that simple tabular models cannot see.
+- **Network features dominate** in every model that uses them. The top predictors are graph-derived: `avg_investor_degree`, `company_degree`, `avg_investor_betweenness`, `company_pagerank`, `investor_coinv_density`. Investor connectivity is the single strongest signal of startup success.
+- **Education/job features (V2) add ~+0.5–1.5% AUC for tabular models** (LightGBM, Node2Vec+XGBoost) but are neutral-to-slightly-negative for the GNNs — likely because graph message passing already captures most of the social-network signal that V2 features encode, and ~40% missingness becomes noise on otherwise sparse nodes.
+- **Embedding-based models lead.** Lin's Node2Vec + XGBoost is the top model on both ROC-AUC and PR-AUC, narrowly beating LightGBM V2 and the GNNs — combining unsupervised structural embeddings with a strong tabular classifier outperforms either alone.
+- **GNNs are competitive but not dominant.** Carrie's homogeneous GraphSAGE and heterogeneous GAT both reach ~0.79–0.80 AUC, on par with the tabular ensembles. Ray's heterogeneous GraphSAGE on a chronological split (the realistic deployment scenario) drops to ~0.73 — the honest "deploy in 2024" number.
 
 ### All Models
 
@@ -251,7 +295,7 @@ The `models/` directory contains all team members' model implementations:
 | Random Forest (V1 + V2)                    | `models/rf_startup_exit.ipynb`               | Leo    |
 | Homogeneous GraphSAGE + Heterogeneous GAT  | `models/GNN_phrase2_hetero.ipynb`            | Carrie |
 | Heterogeneous GraphSAGE (V1 + V2)          | `models/Graphsage/`                          | Ray    |
-| Logistic Regression                        | `models/weilong_logistic.py`                 | Weilong |
+| Logistic Regression (early baseline, tabular only) | `models/weilong_logistic.py`         | Weilong |
 | GNN prototype                              | `models/JP1_GNN_prototype.ipynb`             | JP     |
 
 ### Detailed Model Reports
