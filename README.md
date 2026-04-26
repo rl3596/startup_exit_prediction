@@ -296,7 +296,6 @@ The `models/` directory contains all team members' model implementations:
 | Homogeneous GraphSAGE + Heterogeneous GAT  | `models/GNN_phrase2_hetero.ipynb`            | Carrie |
 | Heterogeneous GraphSAGE (V1 + V2)          | `models/Graphsage/`                          | Ray    |
 | Logistic Regression (early baseline, tabular only) | `models/weilong_logistic.py`         | Weilong |
-| GNN prototype                              | `models/JP1_GNN_prototype.ipynb`             | JP     |
 
 ### Detailed Model Reports
 
