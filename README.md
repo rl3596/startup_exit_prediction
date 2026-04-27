@@ -211,7 +211,7 @@ Two feature sets are evaluated for every model:
 | **Node2Vec + LR V2**             | Lin    | 45 + emb | 0.8152 | 0.5596 | 75.1% |
 | **Node2Vec + XGBoost V1**        | Lin    | 31 + emb | 0.8217 | **0.5664** | 82.2% |
 | **Node2Vec + XGBoost V2**        | Lin    | 45 + emb | **0.8253** | 0.5628 | 81.4% |
-| **Random Forest V1**             | Leo    | 31 | 0.7877 | 0.5047 | — |
+| **Random Forest V1**             | Leo    | 31 | 0.7877 | 0.5047 | 75.5% |
 | **Random Forest V2**             | Leo    | 45 | 0.7730 | 0.4805 | 75.8% |
 | **GNN V1**   | Carrie | 31 | 0.8015 | 0.5141 | 73.8% |
 | **GNN V2**   | Carrie | 45 | 0.7960 | 0.5137 | 73.1% |
