@@ -213,12 +213,12 @@ Two feature sets are evaluated for every model:
 | **Node2Vec + XGBoost V2**        | Lin    | 45 + emb | **0.8253** | 0.5628 | 81.4% |
 | **Random Forest V1**             | Leo    | 31 | 0.7877 | 0.5047 | — |
 | **Random Forest V2**             | Leo    | 45 | 0.7730 | 0.4805 | 75.8% |
-| **GraphSAGE (homogeneous) V1**   | Carrie | 31 | 0.8015 | 0.5141 | 73.8% |
-| **GraphSAGE (homogeneous) V2**   | Carrie | 45 | 0.7960 | 0.5137 | 73.1% |
-| **GAT (heterogeneous) V1**       | Carrie | 31 | 0.7973 | 0.5171 | 76.19% |
-| **GAT (heterogeneous) V2**       | Carrie | 45 | 0.7886 | 0.5124 | 76.19% |
-| **GraphSAGE (heterogeneous) V1** | Ray    | 31 | 0.7223 | 0.5422 | — (chrono split) |
-| **GraphSAGE (heterogeneous) V2** | Ray    | 45 | 0.7325 | 0.5319 | — (chrono split) |
+| **GNN V1**   | Carrie | 31 | 0.8015 | 0.5141 | 73.8% |
+| **GNN V2**   | Carrie | 45 | 0.7960 | 0.5137 | 73.1% |
+| **Hetero GNN + GAT V1**       | Carrie | 31 | 0.7973 | 0.5171 | 76.19% |
+| **Hetero GNN + GAT V2**       | Carrie | 45 | 0.7886 | 0.5124 | 76.19% |
+| **GraphSAGE V1** | Ray    | 31 | 0.7223 | 0.5422 | — (chrono split) |
+| **GraphSAGE V2** | Ray    | 45 | 0.7325 | 0.5319 | — (chrono split) |
 
 > **Note on splits**: Most models use a random 80/20 stratified split (test n=1,319). Ray's heterogeneous GraphSAGE uses a **chronological** split (train ≤ 2020, val 2021-22, test ≥ 2023, n=2,666) — a strictly harder, more realistic generalization test that explains the lower headline AUC.
 
